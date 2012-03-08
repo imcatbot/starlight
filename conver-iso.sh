@@ -1,14 +1,21 @@
 #! /bin/bash
 
-BUILD_TMP_DIR=tmp_build
-
 CURRENT_DIR=$PWD
-SRC_ISO=$1
+BUILD_TMP_DIR=$CURRENT_DIR/tmp_build
+
 DEST_ISO=starlight.iso
 ROOT_FS_PACKAGE=$CURRENT_DIR/rootfs.tgz
 
+INITRD_VMLINUZ=$CURRENT_DIR/initrd-vmlinuz.tgz
+
+ORIG_INITRD=$BUILD_TMP_DIR/boot/initrd.img
+ORIG_VMLINUZ=$BUILD_TMP_DIR/boot/vmlinuz
+
 mkdir -p $BUILD_TMP_DIR
 pushd $BUILD_TMP_DIR
+
+mkdir -p boot
+tar -zxf $INITRD_VMLINUZ -C boot
 
 mkdir -p cd/install.386
 
@@ -22,9 +29,9 @@ cp -a $CURRENT_DIR/isolinux cd/
 # put preseed into initrd
 mkdir irmod
 cd irmod
-gzip -d < $CURRENT_DIR/boot/initrd.img-2.6.32-5-686 | \
-    cpio --extract --verbose --make-directories --no-absolute-filenames
-#cp $CURRENT_DIR/my_preseed.cfg preseed.cfg
+gzip -d < $ORIG_INITRD | \
+    cpio --extract  --make-directories --no-absolute-filenames
+
 cp $CURRENT_DIR/boot/init .
 find . | cpio -H newc --create --verbose | \
     gzip -9 > ../cd/install.386/initrd.gz
@@ -32,7 +39,7 @@ find . | cpio -H newc --create --verbose | \
 cd ../
 rm -fr irmod/
 #cp $CURRENT_DIR/boot/initrd.img-2.6.32-5-686 cd/install.386/initrd.gz
-cp $CURRENT_DIR/boot/vmlinuz-2.6.32-5-686 cd/install.386/vmlinuz
+cp $ORIG_VMLINUZ cd/install.386/vmlinuz
 cp $ROOT_FS_PACKAGE cd/rootfs.tgz
 
 # Re-generate md5sum
