@@ -1,0 +1,19 @@
+#!/bin/sh
+
+echo -e "\t\tWelcome to \033[31mStarLight\033[0m Linux"   
+
+echo "Fisrt, partition..."
+echo "Second, tar filesystem"
+echo "Third, modify etc/fstab and install grub"
+echo "Reboot syste"
+
+[ -d /dev ] || mkdir -m 0755 /dev
+[ -d /root ] || mkdir -m 0700 /root
+[ -d /sys ] || mkdir /sys
+[ -d /proc ] || mkdir /proc
+[ -d /tmp ] || mkdir /tmp
+mkdir -p /var/lock
+mount -t sysfs -o nodev,noexec,nosuid none /sys
+mount -t proc -o nodev,noexec,nosuid none /proc
+
+/bin/sh "$@" </dev/console
