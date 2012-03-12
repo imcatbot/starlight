@@ -6,15 +6,16 @@ OUTPUT=$CURRENT_DIR/initrd-vmlinuz.tgz
 CMDS="fdisk mkfs.ext4 mkfs mkfs.ext3 lsmod bash mount"
 
 function COPYCMD {
-    B=.
+    B=usr/local
     which $1 &> /dev/null || echo "$1 is not exist" | return 5 
     DIR=`which $1 | grep -o "/.*"`    
     DIR1=`echo $DIR | sed "s@\(.*\)$1@\1@g"`  
   
     [ -d $B$DIR1 ] || mkdir -p $B$DIR1     
-    echo "cp -f $DIR $B$DIR1"
+    echo "cp -f [$DIR] [$B$DIR1]"
     cp -f $DIR $B$DIR1      
    
+    B=.
     for I in `ldd $DIR | grep -o "/[^[:space:]]*"`
     do  
 	DIR1=`echo $I | sed "s@\(.*\)/[^/]*@\1@g"`  
@@ -33,7 +34,11 @@ pushd .tmpinitrd/initrd_dir
 # uncompress initrd
 cat /initrd.img|gunzip |cpio -di
 
+#create empty mtab
+touch etc/mtab
+
 # make your modification here
+mkdir -p usr/local
 for c in $CMDS
 do
     COPYCMD $c
