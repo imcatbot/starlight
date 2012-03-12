@@ -43,4 +43,4 @@ if [ -d /sys/bus/scsi ]; then
 fi
 
 # Now enter shell
-/bin/sh "$@" </dev/console
+exec /bin/bash "$@" </dev/console
