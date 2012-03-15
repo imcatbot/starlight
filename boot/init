@@ -43,4 +43,5 @@ if [ -d /sys/bus/scsi ]; then
 fi
 
 # Now enter shell
-exec /bin/bash "$@" </dev/console
+export PATH=$PATH:/usr/local/bin:/usr/local/sbin:
+exec /bin/sh "$@" </dev/console
