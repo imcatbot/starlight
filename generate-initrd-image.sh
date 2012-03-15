@@ -3,7 +3,7 @@
 CURRENT_DIR=$PWD
 OUTPUT=$CURRENT_DIR/initrd-vmlinuz.tgz
 
-CMDS="gfdisk mkfs.ext4 mkfs mkfs.ext3 lsmod bash mount"
+CMDS="gfdisk parted mkfs.ext4 mkfs mkfs.ext3 mkswap lsmod bash mount"
 
 function COPYCMD {
     B=usr/local
