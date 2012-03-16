@@ -44,4 +44,99 @@ fi
 
 # Now enter shell
 export PATH=$PATH:/usr/local/bin:/usr/local/sbin:
+
+echo "partiion disk..."
+FDISK=fdisk
+DEVICE=/dev/hda
+[ -e /dev/sda ] && DISK=/dev/sda
+[ -e /dev/vda ] && DISK=/dev/vda
+
+which gfdisk && FDISK=gfdisk
+
+# clean up all partitions
+$FDISK $DEVICE <<EOF
+d
+1
+d
+2
+d
+3
+d
+4
+w
+EOF
+
+# create new partitions
+$FDISK $DEVICE <<EOF
+n
+p
+1
+1
++1024M
+n
+e
+4
+n
+l
+
+
+w
+EOF
+
+# load device-mapper drivers
+modprobe dm_mod
+modprobe dm_mirror
+modprobe dm_snapshot
+
+# create lvm
+lvm pvcreate ${DEVICE}5
+lvm vgcreate vg ${DEVICE}5
+lvm lvcreate -n swap -L 4G vg
+lvm lvcreate -n root -L 4G vg
+lvm lvcreate -n home -l 100%FREE vg
+
+lvm vgchange -a y
+
+mkfs.ext4 /dev/sda1
+mkfs.ext4 /dev/vg/root
+mkfs.ext4 /dev/vg/home
+mkswap /dev/vg/swap
+
+# mount device
+mkdir -p /sysroot
+mkdir -p /mnt
+
+mount -t ext4 /dev/mapper/vg-root /sysroot
+
+mkdir -p /sysroot/boot
+mount -t ext4 /dev/sda1 /sysroot/boot
+
+mkdir -p /sysroot/home
+mount -t ext4 /dev/mapper/vg-home /sysroot/home
+
+mount -t iso9660 /dev/sr0 /mnt
+#exec /bin/sh "$@" </dev/console
+tar -zxvf /mnt/rootfs.tgz -C /sysroot >/dev/null
+
+mkdir -p /sysroot/proc
+mkdir -p /sysroot/dev
+mkdir -p /sysroot/sys
+
+cd /sysroot
+mount --bind /proc proc 
+mount --bind /dev dev 
+mount --bind /sys sys
+
+chroot .
+
+grub-install /dev/sda
+
+# Modify fstab
+
+# grub config
+grub-mkconfig
+
+# off chroot
+#exit
+
 exec /bin/sh "$@" </dev/console
