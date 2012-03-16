@@ -45,41 +45,37 @@ fi
 # Now enter shell
 export PATH=$PATH:/usr/local/bin:/usr/local/sbin:
 
+/bin/sh "$@" </dev/console
 echo "partiion disk..."
 FDISK=fdisk
 DEVICE=/dev/hda
-[ -e /dev/sda ] && DISK=/dev/sda
-[ -e /dev/vda ] && DISK=/dev/vda
+[ -e /dev/sda ] && DEVICE=/dev/sda
+[ -e /dev/vda ] && DEVICE=/dev/vda
+
 
 which gfdisk && FDISK=gfdisk
 
 # clean up all partitions
-$FDISK $DEVICE <<EOF
-d
-1
-d
-2
-d
-3
-d
-4
-w
-EOF
+dd of=$DEVICE if=/dev/zero bs=512 count=1
 
 # create new partitions
 $FDISK $DEVICE <<EOF
 n
 p
 1
-1
+
 +1024M
 n
 e
 4
+
+
 n
 l
 
 
+a
+1
 w
 EOF
 
@@ -116,6 +112,7 @@ mount -t ext4 /dev/mapper/vg-home /sysroot/home
 
 mount -t iso9660 /dev/sr0 /mnt
 #exec /bin/sh "$@" </dev/console
+echo "Install files..."
 tar -zxvf /mnt/rootfs.tgz -C /sysroot >/dev/null
 
 mkdir -p /sysroot/proc
@@ -127,16 +124,22 @@ mount --bind /proc proc
 mount --bind /dev dev 
 mount --bind /sys sys
 
-chroot .
-
-grub-install /dev/sda
-
-# Modify fstab
+echo "Install grub..."
+chroot . grub-install /dev/sda
 
 # grub config
-grub-mkconfig
+chroot . grub-mkconfig
 
-# off chroot
-#exit
+#create new fstab
+cat >/sysroot/etc/fstab <<EOF
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc         proc    defaults        0       0
+/dev/sda1       /boot         ext4     defaults        0       1
+/dev/mapper/vg-home  /home    ext4     defaults        0       1
+/dev/mapper/vg-root  /        ext4     defaults        0       1
+/dev/mapper/vg-swap  none     swap    sw              0       0
 
-exec /bin/sh "$@" </dev/console
+EOF
+
+/bin/sh "$@" </dev/console
+reboot
