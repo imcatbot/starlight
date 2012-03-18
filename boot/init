@@ -132,7 +132,7 @@ echo "Install grub..."
 chroot . grub-install /dev/sda
 
 # grub config
-chroot . grub-mkconfig >/boot/grub/grub.cfg
+chroot . grub-mkconfig -o /boot/grub/grub.cfg
 
 #create new fstab
 cat >/sysroot/etc/fstab <<EOF
