@@ -124,11 +124,15 @@ mount --bind /proc proc
 mount --bind /dev dev 
 mount --bind /sys sys
 
+KERN_VERSION=`chroot . ls /lib/modules/|head -1`
+echo "Re-generate init...${KERN_VERSION}" 
+chroot . mkinitramfs -o /boot/initrd.img-${KERN_VERSION} ${KERN_VERSION}
+
 echo "Install grub..."
 chroot . grub-install /dev/sda
 
 # grub config
-chroot . grub-mkconfig
+chroot . grub-mkconfig >/boot/grub/grub.cfg
 
 #create new fstab
 cat >/sysroot/etc/fstab <<EOF
@@ -140,6 +144,8 @@ proc            /proc         proc    defaults        0       0
 /dev/mapper/vg-swap  none     swap    sw              0       0
 
 EOF
+
+# re-generate an init for new system
 
 /bin/sh "$@" </dev/console
 reboot
