@@ -113,8 +113,8 @@ fi
 
 
 # create lvm
-lvm pvcreate -ff ${DEVICE}5
-lvm vgcreate -ff vg ${DEVICE}5
+lvm pvcreate ${DEVICE}5
+lvm vgcreate vg ${DEVICE}5
 lvm lvcreate -n swap -L ${SWAP_SIZE} vg
 lvm lvcreate -n root -L ${ROOT_SIZE} vg
 lvm lvcreate -n home -l 100%FREE vg
