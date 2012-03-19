@@ -2,16 +2,12 @@
 
 echo -e "\t\tWelcome to \033[31mStarLight\033[0m Linux"   
 
-echo "Fisrt, partition..."
-echo "Second, tar filesystem"
-echo "Third, modify etc/fstab and install grub"
-echo "Reboot syste"
-
 [ -d /dev ] || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
 [ -d /sys ] || mkdir /sys
 [ -d /proc ] || mkdir /proc
 [ -d /tmp ] || mkdir /tmp
+
 mkdir -p /var/lock
 mount -t sysfs -o nodev,noexec,nosuid none /sys
 mount -t proc -o nodev,noexec,nosuid none /proc
@@ -52,8 +48,21 @@ DEVICE=/dev/hda
 [ -e /dev/sda ] && DEVICE=/dev/sda
 [ -e /dev/vda ] && DEVICE=/dev/vda
 
+if fdisk -l /dev/sda|grep GB >/dev/null
+then
+    DISK_TOTAL_SIZE=`fdisk -l /dev/sda|grep GB|awk '{print $3}'|sed -e 's/\..*//'`
+else
+    DISK_TOTAL_SIZE=`fdisk -l /dev/sda|grep MB|awk '{print $3}'|sed -e 's/\..*//'`
+    DISK_TOTAL_SIZE=`expr $DISK_TOTAL_SIZE / 1024`
+fi
 
-which gfdisk && FDISK=gfdisk
+if [ $DISK_TOTAL_SIZE -le 4 ]
+then
+    echo "The avaliable disk is too small"
+    echo "press enter key to continue"
+    read
+    reboot
+fi
 
 # clean up all partitions
 dd of=$DEVICE if=/dev/zero bs=512 count=1
@@ -64,7 +73,7 @@ n
 p
 1
 
-+1024M
++512M
 n
 e
 4
@@ -84,16 +93,35 @@ modprobe dm_mod
 modprobe dm_mirror
 modprobe dm_snapshot
 
+# calculate size of swap and root partition
+SWAP_SIZE=
+ROOT_SIZE=
+echo "TOTAL SIZE="$DISK_TOTAL_SIZE
+
+if [ ${DISK_TOTAL_SIZE} -le 10 ]
+then
+    SWAP_SIZE=2G
+    ROOT_SIZE=4G
+elif [ ${DISK_TOTAL_SIZE} -le 20 ]
+then
+    SWAP_SIZE=4G
+    ROOT_SIZE=80%FREE
+else
+    SWAP_SIZE=4G
+    ROOT_SIZE=12G
+fi
+
+
 # create lvm
 lvm pvcreate ${DEVICE}5
-lvm vgcreate vg ${DEVICE}5
-lvm lvcreate -n swap -L 4G vg
-lvm lvcreate -n root -L 4G vg
+lvm vgcreate -ff vg ${DEVICE}5
+lvm lvcreate -n swap -L ${SWAP_SIZE} vg
+lvm lvcreate -n root -L ${ROOT_SIZE} vg
 lvm lvcreate -n home -l 100%FREE vg
 
 lvm vgchange -a y
 
-mkfs.ext4 /dev/sda1
+mkfs.ext4 ${DEVICE}1
 mkfs.ext4 /dev/vg/root
 mkfs.ext4 /dev/vg/home
 mkswap /dev/vg/swap
@@ -105,13 +133,13 @@ mkdir -p /mnt
 mount -t ext4 /dev/mapper/vg-root /sysroot
 
 mkdir -p /sysroot/boot
-mount -t ext4 /dev/sda1 /sysroot/boot
+mount -t ext4 ${DEVICE}1 /sysroot/boot
 
 mkdir -p /sysroot/home
 mount -t ext4 /dev/mapper/vg-home /sysroot/home
 
 mount -t iso9660 /dev/sr0 /mnt
-#exec /bin/sh "$@" </dev/console
+exec /bin/sh "$@" </dev/console
 echo "Install files..."
 tar -zxvf /mnt/rootfs.tgz -C /sysroot >/dev/null
 
@@ -129,7 +157,7 @@ echo "Re-generate init...${KERN_VERSION}"
 chroot . mkinitramfs -o /boot/initrd.img-${KERN_VERSION} ${KERN_VERSION}
 
 echo "Install grub..."
-chroot . grub-install /dev/sda
+chroot . grub-install ${DEVICE}
 
 # grub config
 chroot . grub-mkconfig -o /boot/grub/grub.cfg
@@ -138,7 +166,7 @@ chroot . grub-mkconfig -o /boot/grub/grub.cfg
 cat >/sysroot/etc/fstab <<EOF
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 proc            /proc         proc    defaults        0       0
-/dev/sda1       /boot         ext4     defaults        0       1
+${DEVICE}1       /boot         ext4     defaults        0       1
 /dev/mapper/vg-home  /home    ext4     defaults        0       1
 /dev/mapper/vg-root  /        ext4     defaults        0       1
 /dev/mapper/vg-swap  none     swap    sw              0       0
