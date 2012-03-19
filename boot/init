@@ -113,7 +113,7 @@ fi
 
 
 # create lvm
-lvm pvcreate ${DEVICE}5
+lvm pvcreate -ff ${DEVICE}5
 lvm vgcreate -ff vg ${DEVICE}5
 lvm lvcreate -n swap -L ${SWAP_SIZE} vg
 lvm lvcreate -n root -L ${ROOT_SIZE} vg
@@ -139,7 +139,7 @@ mkdir -p /sysroot/home
 mount -t ext4 /dev/mapper/vg-home /sysroot/home
 
 mount -t iso9660 /dev/sr0 /mnt
-exec /bin/sh "$@" </dev/console
+
 echo "Install files..."
 tar -zxvf /mnt/rootfs.tgz -C /sysroot >/dev/null
 
