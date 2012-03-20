@@ -3,14 +3,15 @@
 CURRENT_DIR=$PWD
 OUTPUT=$CURRENT_DIR/initrd-vmlinuz.tgz
 
-CMDS="fdisk parted mkfs.ext4 mkfs mkfs.ext3 mkswap lsmod bash mount dialog"
+CMDS="fdisk parted mkfs.ext4 mkfs mkfs.ext3 mkswap lsmod bash mount dialog whiptail"
 
 function COPYCMD {
     DEST=usr/local/bin
-    which $1 > /dev/null || echo "$1 is not exist" && return 5
+    which $1 > /dev/null || echo "$1 is not exist" | return 5
     BIN=`which $1`
   
     [ -d $DEST ] || mkdir -p $DEST
+    echo "cp -f $BIN $DEST"
     cp -f $BIN $DEST
    
     RELATED_DIR=./
@@ -18,6 +19,7 @@ function COPYCMD {
     do  
 	DIRNAME=`dirname $I`
 	[ -d ${RELATED_DIR}${DIRNAME} ] || mkdir -p ${RELATED_DIR}${DIRNAME}
+	echo "cp -f $I ${RELATED_DIR}${DIRNAME}"
 	cp -f $I ${RELATED_DIR}${DIRNAME}
     done  
 }
