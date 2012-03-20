@@ -70,11 +70,11 @@ DEVICE=/dev/hda
 [ -e /dev/sda ] && DEVICE=/dev/sda
 [ -e /dev/vda ] && DEVICE=/dev/vda
 
-if fdisk -l /dev/sda|grep GB >/dev/null
+if fdisk -l ${DEVICE}|grep GB >/dev/null
 then
-    DISK_TOTAL_SIZE=`fdisk -l /dev/sda|grep GB|awk '{print $3}'|sed -e 's/\..*//'`
+    DISK_TOTAL_SIZE=`fdisk -l ${DEVICE}|grep GB|awk '{print $3}'|sed -e 's/\..*//'`
 else
-    DISK_TOTAL_SIZE=`fdisk -l /dev/sda|grep MB|awk '{print $3}'|sed -e 's/\..*//'`
+    DISK_TOTAL_SIZE=`fdisk -l ${DEVICE}|grep MB|awk '{print $3}'|sed -e 's/\..*//'`
     DISK_TOTAL_SIZE=`expr $DISK_TOTAL_SIZE / 1024`
 fi
 
