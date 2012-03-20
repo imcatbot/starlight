@@ -3,24 +3,22 @@
 CURRENT_DIR=$PWD
 OUTPUT=$CURRENT_DIR/initrd-vmlinuz.tgz
 
-CMDS="fdisk parted mkfs.ext4 mkfs mkfs.ext3 mkswap lsmod bash mount"
+CMDS="fdisk parted mkfs.ext4 mkfs mkfs.ext3 mkswap lsmod bash mount dialog"
 
 function COPYCMD {
-    B=usr/local
-    which $1 &> /dev/null || echo "$1 is not exist" | return 5 
-    DIR=`which $1 | grep -o "/.*"`    
-    DIR1=`echo $DIR | sed "s@\(.*\)$1@\1@g"`  
+    DEST=usr/local/bin
+    which $1 > /dev/null || echo "$1 is not exist" && return 5
+    BIN=`which $1`
   
-    [ -d $B$DIR1 ] || mkdir -p $B$DIR1     
-    echo "cp -f [$DIR] [$B$DIR1]"
-    cp -f $DIR $B$DIR1      
+    [ -d $DEST ] || mkdir -p $DEST
+    cp -f $BIN $DEST      
    
-    B=.
-    for I in `ldd $DIR | grep -o "/[^[:space:]]*"`
+    RELATED_DIR=./
+    for I in `ldd $BIN | grep -o "/[^[:space:]]*"`
     do  
-	DIR1=`echo $I | sed "s@\(.*\)/[^/]*@\1@g"`  
-	[ -d $B$DIR1 ] || mkdir -p $B$DIR1  
-	cp -f $I $B$DIR1
+	DIRNAME=`dirname $I`
+	[ -d ${RELATED_DIR}${DIRNAME} ] || mkdir -p ${RELATED_DIR}${DIRNAME}
+	cp -f $I ${RELATED_DIR}${DIRNAME}
     done  
 }
 
