@@ -11,7 +11,7 @@ function COPYCMD {
     BIN=`which $1`
   
     [ -d $DEST ] || mkdir -p $DEST
-    cp -f $BIN $DEST      
+    cp -f $BIN $DEST
    
     RELATED_DIR=./
     for I in `ldd $BIN | grep -o "/[^[:space:]]*"`
