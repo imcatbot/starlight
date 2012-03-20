@@ -3,6 +3,12 @@
 export PATH=$PATH:/usr/local/bin:/usr/local/sbin
 export TERM=linux-basic
 
+# redirect the output of the cmd to /dev/null
+cmd_to_null() 
+{
+    $@ >/dev/null 2>&1
+}
+
 #echo -e "\t\tWelcome to \033[31mStarLight\033[0m Linux"   
 dialog --backtitle "Welcome to StarLight Linux" \
     --title "Installation" \
@@ -33,11 +39,10 @@ dialog --backtitle "Welcome to StarLight Linux" \
 # are used; which they will be, but it's worth pointing out
 tmpfs_size="10M"
 if [ -e /etc/udev/udev.conf ]; then
-	. /etc/udev/udev.conf
+	cmd_to_null . /etc/udev/udev.conf
 fi
-if ! mount -t devtmpfs -o mode=0755 none /dev; then
-	echo "W: devtmpfs not available, falling back to tmpfs for /dev"
-	mount -t tmpfs -o size=$tmpfs_size,mode=0755 udev /dev
+if ! cmd_to_null mount -t devtmpfs -o mode=0755 none /dev; then
+	cmd_to_null mount -t tmpfs -o size=$tmpfs_size,mode=0755 udev /dev
 	[ -e /dev/console ] || mknod -m 0600 /dev/console c 5 1
 	[ -e /dev/null ] || mknod /dev/null c 1 3
 fi
@@ -45,10 +50,10 @@ mkdir /dev/pts
 mount -t devpts -o noexec,nosuid,gid=5,mode=0620 none /dev/pts || true
 
 UDEV_ROOT=/dev \
-udevd --daemon --resolve-names=never
+cmd_to_null udevd --daemon --resolve-names=never
 
-udevadm trigger --action=add
-udevadm settle || true
+cmd_to_null udevadm trigger --action=add
+cmd_to_null udevadm settle || true
 
 if [ -d /sys/bus/scsi ]; then
 	modprobe -q scsi_wait_scan && modprobe -r scsi_wait_scan || true
@@ -111,9 +116,9 @@ dialog --backtitle "Welcome to StarLight Linux" \
     10 50
 
 # load device-mapper drivers
-modprobe dm_mod
-modprobe dm_mirror
-modprobe dm_snapshot
+cmd_to_null modprobe dm_mod
+cmd_to_null modprobe dm_mirror
+cmd_to_null modprobe dm_snapshot
 
 # calculate size of swap and root partition
 SWAP_SIZE=
@@ -139,23 +144,23 @@ dialog --backtitle "Welcome to StarLight Linux" \
     10 50
 
 # create lvm
-lvm pvcreate ${DEVICE}5 
-lvm vgcreate vg ${DEVICE}5
-lvm lvcreate -n swap -L ${SWAP_SIZE} vg
-lvm lvcreate -n root -L ${ROOT_SIZE} vg
-lvm lvcreate -n home -l 100%FREE vg
+cmd_to_null lvm pvcreate ${DEVICE}5 
+cmd_to_null lvm vgcreate vg ${DEVICE}5
+cmd_to_null lvm lvcreate -n swap -L ${SWAP_SIZE} vg
+cmd_to_null lvm lvcreate -n root -L ${ROOT_SIZE} vg
+cmd_to_null lvm lvcreate -n home -l 100%FREE vg
 
-lvm vgchange -a y
+cmd_to_null lvm vgchange -a y
 
 dialog --backtitle "Welcome to StarLight Linux" \
     --title "Installation" \
     --infobox "Formating disk..." \
     10 50
 
-mkfs.ext4 ${DEVICE}1
-mkfs.ext4 /dev/vg/root
-mkfs.ext4 /dev/vg/home
-mkswap /dev/vg/swap
+cmd_to_null mkfs.ext4 ${DEVICE}1
+cmd_to_null mkfs.ext4 /dev/vg/root
+cmd_to_null mkfs.ext4 /dev/vg/home
+cmd_to_null mkswap /dev/vg/swap
 
 # mount device
 dialog --backtitle "Welcome to StarLight Linux" \
@@ -180,7 +185,7 @@ dialog --backtitle "Welcome to StarLight Linux" \
     --infobox "Installing root filesystem..." \
     10 50
 
-tar -zxvf /mnt/rootfs.tgz -C /sysroot >/dev/null
+cmd_to_null tar -zxvf /mnt/rootfs.tgz -C /sysroot 
 
 dialog --backtitle "Welcome to StarLight Linux" \
     --title "Installation" \
