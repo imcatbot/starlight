@@ -1,16 +1,33 @@
-#!/bin/sh
+#! /bin/sh
 
-echo -e "\t\tWelcome to \033[31mStarLight\033[0m Linux"   
+export PATH=$PATH:/usr/local/bin:/usr/local/sbin
+export TERM=linux-basic
 
-[ -d /dev ] || mkdir -m 0755 /dev
+#echo -e "\t\tWelcome to \033[31mStarLight\033[0m Linux"   
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --pause "press <Cancel> to abort installation" \
+    10 50 15
+x=$? 
+if [ $x -ne 0 ]
+then
+    reboot
+fi
+
+[ -d /dev ]  || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
-[ -d /sys ] || mkdir /sys
+[ -d /sys ]  || mkdir /sys
 [ -d /proc ] || mkdir /proc
-[ -d /tmp ] || mkdir /tmp
+[ -d /tmp ]  || mkdir /tmp
 
 mkdir -p /var/lock
 mount -t sysfs -o nodev,noexec,nosuid none /sys
 mount -t proc -o nodev,noexec,nosuid none /proc
+
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Initialize udev..." \
+    10 50 
 
 # Note that this only becomes /dev on the real filesystem if udev's scripts
 # are used; which they will be, but it's worth pointing out
@@ -38,11 +55,11 @@ if [ -d /sys/bus/scsi ]; then
 	udevadm settle || true
 fi
 
-# Now enter shell
-export PATH=$PATH:/usr/local/bin:/usr/local/sbin:
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Partition disk..." \
+    10 50
 
-/bin/sh "$@" </dev/console
-echo "partiion disk..."
 FDISK=fdisk
 DEVICE=/dev/hda
 [ -e /dev/sda ] && DEVICE=/dev/sda
@@ -68,7 +85,7 @@ fi
 dd of=$DEVICE if=/dev/zero bs=512 count=1
 
 # create new partitions
-$FDISK $DEVICE <<EOF
+$FDISK $DEVICE >/dev/null <<EOF
 n
 p
 1
@@ -87,6 +104,11 @@ a
 1
 w
 EOF
+
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Loading device-mapper..." \
+    10 50
 
 # load device-mapper drivers
 modprobe dm_mod
@@ -111,9 +133,13 @@ else
     ROOT_SIZE=12G
 fi
 
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Createing lvm..." \
+    10 50
 
 # create lvm
-lvm pvcreate ${DEVICE}5
+lvm pvcreate ${DEVICE}5 
 lvm vgcreate vg ${DEVICE}5
 lvm lvcreate -n swap -L ${SWAP_SIZE} vg
 lvm lvcreate -n root -L ${ROOT_SIZE} vg
@@ -121,12 +147,21 @@ lvm lvcreate -n home -l 100%FREE vg
 
 lvm vgchange -a y
 
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Formating disk..." \
+    10 50
+
 mkfs.ext4 ${DEVICE}1
 mkfs.ext4 /dev/vg/root
 mkfs.ext4 /dev/vg/home
 mkswap /dev/vg/swap
 
 # mount device
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Mounting partition..." \
+    10 50
 mkdir -p /sysroot
 mkdir -p /mnt
 
@@ -140,8 +175,17 @@ mount -t ext4 /dev/mapper/vg-home /sysroot/home
 
 mount -t iso9660 /dev/sr0 /mnt
 
-echo "Install files..."
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Installing root filesystem..." \
+    10 50
+
 tar -zxvf /mnt/rootfs.tgz -C /sysroot >/dev/null
+
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Installing root filesystem compeleted" \
+    10 50
 
 mkdir -p /sysroot/proc
 mkdir -p /sysroot/dev
@@ -153,16 +197,31 @@ mount --bind /dev dev
 mount --bind /sys sys
 
 KERN_VERSION=`chroot . ls /lib/modules/|head -1`
-echo "Re-generate init...${KERN_VERSION}" 
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Making initrd kernel $KERN_VERSION..." \
+    10 50
+
 chroot . mkinitramfs -o /boot/initrd.img-${KERN_VERSION} ${KERN_VERSION}
 
-echo "Install grub..."
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Installing grub to ${DEVICE}..." \
+    10 50
 chroot . grub-install ${DEVICE}
 
 # grub config
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Generating grub config..." \
+    10 50
 chroot . grub-mkconfig -o /boot/grub/grub.cfg
 
 #create new fstab
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --infobox "Creating fstab..." \
+    10 50
 cat >/sysroot/etc/fstab <<EOF
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 proc            /proc         proc    defaults        0       0
@@ -174,6 +233,16 @@ ${DEVICE}1       /boot         ext4     defaults        0       1
 EOF
 
 # re-generate an init for new system
-
-/bin/sh "$@" </dev/console
-reboot
+dialog --backtitle "Welcome to StarLight Linux" \
+    --title "Installation" \
+    --cancel-label "Shell" \
+    --ok-label "Reboot" \
+    --pause "Installation completed, press <Reboot> to reboot computer" \
+    10 50 15
+x=$?
+if [ $x -ne 0 ]
+then
+    /bin/sh "$@" </dev/console
+else
+    reboot
+fi

@@ -44,6 +44,10 @@ do
     COPYCMD $c
 done
 
+# Copy terminfo
+[ -d usr/share ] || mkdir -p usr/share
+cp -a /usr/share/terminfo/ usr/share/
+
 # re-generate a new initrd image
 find . -print |cpio -H newc --create |gzip -9fn > ../initrd.img
 
