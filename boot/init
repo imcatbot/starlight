@@ -248,6 +248,6 @@ x=$?
 if [ $x -ne 0 ]
 then
     /bin/sh "$@" </dev/console
-else
-    reboot
 fi
+
+reboot
