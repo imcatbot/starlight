@@ -214,8 +214,16 @@ maybe_break mount
 log_begin_msg "Mounting root file system"
 . /scripts/${BOOT}
 parse_numeric ${ROOT}
-maybe_break mountroot
-mountroot
+#maybe_break mountroot
+#mountroot
+mkdir -p /mnt/cdrom
+mkdir -p /root
+modprobe loop
+modprobe squashfs
+
+mount -t iso9660 /dev/sr0 /mnt/cdrom
+mount -o loop -t squashfs /mnt/cdrom/filesystem.squash $rootmnt
+
 log_end_msg
 
 maybe_break bottom

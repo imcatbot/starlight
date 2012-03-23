@@ -4,7 +4,7 @@ CURRENT_DIR=$PWD
 BUILD_TMP_DIR=$CURRENT_DIR/tmp_build
 
 DEST_ISO=starlight.iso
-ROOT_FS_PACKAGE=$CURRENT_DIR/rootfs.tgz
+ROOT_FS_PACKAGE=$CURRENT_DIR/filesystem.squash
 
 INITRD_VMLINUZ=$CURRENT_DIR/initrd-vmlinuz.tgz
 
@@ -40,7 +40,7 @@ cd ../
 rm -fr irmod/
 #cp $CURRENT_DIR/boot/initrd.img-2.6.32-5-686 cd/install.386/initrd.gz
 cp $ORIG_VMLINUZ cd/install.386/vmlinuz
-cp $ROOT_FS_PACKAGE cd/rootfs.tgz
+cp $ROOT_FS_PACKAGE cd/
 
 # Re-generate md5sum
 cd cd

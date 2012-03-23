@@ -47,6 +47,9 @@ done
 # Copy terminfo
 [ -d usr/share ] || mkdir -p usr/share
 cp -a /usr/share/terminfo/ usr/share/
+mkdir -p lib/modules/`uname -r`/kernel/fs/squashfs
+cp /lib/modules/`uname -r`/kernel/fs/squashfs/squashfs.ko lib/modules/`uname -r`/kernel/fs/squashfs
+depmod -b ./
 
 # re-generate a new initrd image
 find . -print |cpio -H newc --create |gzip -9fn > ../initrd.img
