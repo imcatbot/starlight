@@ -217,12 +217,20 @@ parse_numeric ${ROOT}
 #maybe_break mountroot
 #mountroot
 mkdir -p /mnt/cdrom
-mkdir -p /root
+mkdir -p /mnt/rwroot
+mkdir -p /mnt/roroot
+mkdir -p ${rootmnt}
+
 modprobe loop
 modprobe squashfs
+modprobe aufs
+
+mount -t tmpfs -o mode=755 tmpfs /mnt/rwroot
+mount -t aufs -o br:/mnt/rwroot=rw aufs ${rootmnt}
 
 mount -t iso9660 /dev/sr0 /mnt/cdrom
-mount -o loop -t squashfs /mnt/cdrom/filesystem.squash $rootmnt
+mount -o loop -t squashfs /mnt/cdrom/filesystem.squash /mnt/roroot
+mount -n -o remount,add:1:/mnt/roroot=rr aufs ${rootmnt}
 
 log_end_msg
 
@@ -232,8 +240,12 @@ run_scripts /scripts/init-bottom
 [ "$quiet" != "y" ] && log_end_msg
 
 # Move virtual filesystems over to the real filesystem
-mount -n -o move /sys ${rootmnt}/sys
-mount -n -o move /proc ${rootmnt}/proc
+mkdir -p ${rootmnt}/sys
+mkdir -p ${rootmnt}/proc
+mount --bind /sys ${rootmnt}/sys
+mount --bind /proc ${rootmnt}/proc
+mkdir -p ${rootmnt}/mnt/cdrom
+mount --bind /mnt/cdrom ${rootmnt}/mnt/cdrom
 
 validate_init() {
 	checktarget="${1}"
@@ -306,6 +318,9 @@ unset quiet
 unset readonly
 unset resume
 unset resume_offset
+
+echo "run-init ${rootmnt} ${init} "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console"
+/bin/sh "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console
 
 # Chain to real filesystem
 exec run-init ${rootmnt} ${init} "$@" <${rootmnt}/dev/console >${rootmnt}/dev/console

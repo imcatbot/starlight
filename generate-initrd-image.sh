@@ -48,7 +48,9 @@ done
 [ -d usr/share ] || mkdir -p usr/share
 cp -a /usr/share/terminfo/ usr/share/
 mkdir -p lib/modules/`uname -r`/kernel/fs/squashfs
+mkdir -p lib/modules/`uname -r`/kernel/fs/aufs/
 cp /lib/modules/`uname -r`/kernel/fs/squashfs/squashfs.ko lib/modules/`uname -r`/kernel/fs/squashfs
+cp /lib/modules/`uname -r`/kernel/fs/aufs/aufs.ko lib/modules/`uname -r`/kernel/fs/aufs/
 depmod -b ./
 
 # re-generate a new initrd image
