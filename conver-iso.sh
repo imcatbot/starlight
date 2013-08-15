@@ -1,7 +1,7 @@
 #! /bin/bash
 
+# File: convert-iso.sh
 # Build a distribution based on Debian
-# By Jiang Wei
 # 2013
 
 VERBOSE=v
@@ -51,6 +51,19 @@ find . | cpio -H newc --create -${VERBOSE} | \
 
 cd ../
 rm -fr irmod/
+
+# Re-generate Packages
+pushd ${CD_DIR}
+dpkg-scanpackages pool/main /dev/null  > dists/wheezy/main/binary-i386/Packages
+cat dists/wheezy/main/binary-i386/Packages | gzip >dists/wheezy/main/binary-i386/Packages.gz
+popd
+
+# Re-generate Release
+pushd ${CD_DIR}
+apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf generate ${CURRENT_DIR}/indices/milkly-di.conf
+apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf generate ${CURRENT_DIR}/indices/milkly-pool.conf
+apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf release dists/wheezy > dists/wheezy/Release
+popd
 
 # Re-generate md5sum
 cd ${CD_DIR}
