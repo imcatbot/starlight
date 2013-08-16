@@ -18,6 +18,7 @@ ORIG_INITRD=$BUILD_TMP_DIR/cd/install.386/initrd.gz
 PRESEED_FILE=${CURRENT_DIR}/my_preseed.cfg
 
 ADDONS_PACKAGE_DIR=/mirrors/debian/pool/
+SCRIPTS_DIR=${CURRENT_DIR}/scripts/
 
 # Create a temporery directory for build
 mkdir -p $BUILD_TMP_DIR
@@ -56,6 +57,9 @@ rm -fr irmod/
 
 # Additional packages 
 cp -a ${ADDONS_PACKAGE_DIR}/main/e/ ${CD_DIR}/pool/main/
+
+# Scripts
+cp -a ${SCRIPTS_DIR} ${CD_DIR}/
 
 # Re-generate Packages
 pushd ${CD_DIR}
