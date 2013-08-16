@@ -17,6 +17,8 @@ ORIG_INITRD=$BUILD_TMP_DIR/cd/install.386/initrd.gz
 
 PRESEED_FILE=${CURRENT_DIR}/my_preseed.cfg
 
+ADDONS_PACKAGE_DIR=/mirrors/debian/pool/
+
 # Create a temporery directory for build
 mkdir -p $BUILD_TMP_DIR
 mkdir -p ${CD_DIR}
@@ -52,6 +54,9 @@ find . | cpio -H newc --create -${VERBOSE} | \
 cd ../
 rm -fr irmod/
 
+# Additional packages 
+cp -a ${ADDONS_PACKAGE_DIR}/main/e/ ${CD_DIR}/pool/main/
+
 # Re-generate Packages
 pushd ${CD_DIR}
 dpkg-scanpackages pool/main /dev/null  > dists/wheezy/main/binary-i386/Packages
@@ -60,8 +65,8 @@ popd
 
 # Re-generate Release
 pushd ${CD_DIR}
-apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf generate ${CURRENT_DIR}/indices/milkly-di.conf
-apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf generate ${CURRENT_DIR}/indices/milkly-pool.conf
+#apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf generate ${CURRENT_DIR}/indices/milkly-di.conf
+#apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf generate ${CURRENT_DIR}/indices/milkly-pool.conf
 apt-ftparchive -c ${CURRENT_DIR}/indices/apt.conf release dists/wheezy > dists/wheezy/Release
 popd
 
